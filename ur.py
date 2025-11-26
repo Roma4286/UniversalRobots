@@ -2,9 +2,6 @@ import socket
 import time
 import math
 import struct
-from math import pi
-
-from urllib3.util.wait import select_wait_for_socket
 
 robotIP = "10.162.3.228"
 PRIMARY_PORT = 30001
@@ -38,14 +35,6 @@ class Robot:
         finally:
             s.close()
 
-    # def wait_end_of_move(self):
-    #     state = self.get_runtime_state()
-    #     while state != 0:
-    #         time.sleep(0.05)
-    #         f = self.get_tcp_speed()
-    #         state = self.get_runtime_state()
-    #         print(f)
-
     def wait_end_of_move(self):
         state = self.get_runtime_state()
 
@@ -59,6 +48,9 @@ class Robot:
         self.s.sendall((cmd + "\n").encode("utf-8"))
         time.sleep(0.05)
 
+    def move(self, type_of_move: str, final_pose: str, a: float, v: float):
+        self.send_urscript(f"{type_of_move}({final_pose}, a={a}, v={v})")
+
         self.wait_end_of_move()
 
     def move_towards(self, vector, distance, a=0.1, v=0.2):
@@ -67,7 +59,6 @@ class Robot:
         al = math.sqrt(distance**2/(vector[0]**2+vector[1]**2+vector[2]**2))
         if al == 0:
             raise None
-        # Вычисляем новую позицию
         new_pose = [
             current_pose[0]+vector[0]*al,
             current_pose[1]+vector[1]*al,
@@ -77,8 +68,7 @@ class Robot:
             current_pose[5]
         ]
 
-        # Отправляем команду MoveL
-        self.send_urscript(f"movel(p{new_pose}, a={a}, v={v})")
+        self.move("movel", f"p{new_pose}", a, v)
 
     def get_tcp_force(self):
         data = self.get_tcp_data(4096)
@@ -98,7 +88,6 @@ class Robot:
             struct.unpack('!d', data[speed_offset+i * 8: speed_offset+(i+1) * 8])[0]
             for i in range(3)
         ]
-        # tcp_speed = [vx, vy, vz, wx, wy, wz]
         return tcp_speed
 
     def get_runtime_state(self):
@@ -141,18 +130,12 @@ class Robot:
         return new_v
 
     def move_until_contact(self, direction, a=0.1, v=0.05, speed_threshold=0.003):
-        """
-        Двигается в направлении direction (3D) до контакта с объектом,
-        останавливаясь, когда скорость TCP падает ниже speed_threshold.
-        """
 
-        # Нормируем вектор направления
         norm_dir = math.sqrt(direction[0] ** 2+direction[1] ** 2+direction[2] ** 2)
         if norm_dir == 0:
             raise ValueError("Вектор направления не может быть нулевым")
         unit_dir = [d / norm_dir for d in direction]
 
-        # Начинаем движение с помощью speedl
         self.send_urscript(f"speedl([0, 0, 0.05, 0, 0, 0], a={a}, t=3)")
         # self.move_towards(direction, 50, a, v)
 
@@ -161,7 +144,6 @@ class Robot:
             if tcp_speed is None:
                 continue
 
-            # Проверяем норму линейной скорости
             lin_speed_norm = math.sqrt(tcp_speed[0] ** 2+tcp_speed[1] ** 2+tcp_speed[2] ** 2)
             if lin_speed_norm < speed_threshold:
                 self.send_urscript("stopl(10.0)")
@@ -175,7 +157,8 @@ robot = Robot(robotIP)
 robot.send_urscript("zero_ftsensor()")
 f = (robot.get_tcp_speed())
 print(f"1+{f}")
-robot.send_urscript(f"movej([1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], a=0.05, v=0.3)")
+robot.move("movej", "[1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209]", 0.05, 0.3)
+# robot.send_urscript(f"movej([1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], a=0.05, v=0.3)")
 
 # Текущая TCP позиция робота (можно получить через RTDE/30003 или сохранить)
 current_pose = [.148176530408, -.770704002574, -.312483911963, .131255194183, -3.134044456313, .004624001678]
@@ -210,6 +193,7 @@ robot.move_until_contact([0, 0, -1], a=0.1, v=0.05, speed_threshold=0.0007)
 # robot.move_towards(direction, distance, a=1.0, v=0.1)
 d = robot.get_tcp_pose()
 print(d)
-robot.send_urscript("movej([0, -1.57, 0, -1.57, 0, 0], a=0.1, v=0.4)")
+# robot.send_urscript("movej([0, -1.57, 0, -1.57, 0, 0], a=0.1, v=0.4)")
+robot.move("movej", base_point, 0.1, 0.4)
 
 robot.close_connect()
