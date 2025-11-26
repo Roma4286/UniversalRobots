@@ -1,0 +1,18 @@
+ Программа
+   Программа робота
+     MoveL
+       Контр_точка_1
+       Контр_точка_2
+       Направление: Инструмент Z+
+         Until (tool_contact_detection)
+       VG Захват (AB:60 kPa)
+       Направление: Инструмент Z-
+         Until (distance)
+       Направление: Основание
+         Until (distance)
+       Направление: Инструмент Z+
+         Until (tool_contact_detection)
+       VG Отпускание (AB)
+     MoveP
+       Направление: Инструмент Z-
+         Until (distance)
