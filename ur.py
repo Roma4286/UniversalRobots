@@ -40,7 +40,7 @@ class Robot:
 
         while state != 0:
             time.sleep(0.05)
-            # f = self.get_tcp_speed()
+            f = self.get_tcp_force()
             state = self.get_runtime_state()
             # print(f)
 
@@ -70,13 +70,61 @@ class Robot:
 
         self.move("movel", f"p{new_pose}", a, v)
 
+    def move_until_contact(self, vector, force_threshold=30.0, a=0.05, v=0.05):
+        """
+        Движение вдоль direction-vector до момента контакта.
+        Контакт определяется по силе в TCP force (Fx, Fy, Fz).
+        """
+
+        # нормируем вектор направления
+        norm = math.sqrt(sum(c*c for c in vector))
+        if norm == 0:
+            raise ValueError("Vector must not be zero")
+
+        tcp_v = self.move_kirill(vector, v)
+
+        # запускаем движение с постоянной скоростью
+        cmd = f"speedl([{tcp_v[0]}, {tcp_v[1]}, {tcp_v[2]}, 0, 0, 0], a={a}, t=10)"
+        self.send_urscript(cmd)
+
+        print("Начинаю движение до контакта...")
+
+        # читаем силы каждые 20–30 мс
+        while True:
+            Fx, Fy, Fz, Tx, Ty, Tz = self.get_tcp_force()
+
+            # модуль силы
+            force = math.sqrt(Fx**2 + Fy**2 + Fz**2)
+
+            print(f"Force = {force:.3f}  (Fx={Fx:.2f}, Fy={Fy:.2f}, Fz={Fz:.2f})")
+
+            # Условие контакта — сила превысила порог
+            if force > force_threshold:
+                print("Контакт обнаружен!")
+                break
+
+            time.sleep(0.02)
+
+        # Мягкая остановка
+        self.send_urscript("stopl(0.2)")
+
+
+
     def get_tcp_force(self):
-        data = self.get_tcp_data(4096)
+        data = self.get_tcp_data(1108)
         if len(data) < 48:
             return None
 
-        wrench = struct.unpack("!6d", data[-48:])
-        return wrench  # Fx, Fy, Fz, Tx, Ty, Tz
+        m_target = struct.unpack('!6d', data[204:204+48])
+
+        # ---- TCP force ----
+        # начинается с 540 байта
+        tcp_force = struct.unpack('!6d', data[540:540+48])
+
+        # print("Joint torques (M target):", m_target)
+        print("TCP forces:", tcp_force)
+        return tcp_force # Fx, Fy, Fz, Tx, Ty, Tz
+
 
     def get_tcp_speed(self):
         data = self.get_tcp_data(1116)
@@ -121,7 +169,7 @@ class Robot:
         print(ve)
         if ve == 0:
             raise None
-        # Вычисляем новую позицию
+
         new_v = [
             ve * vector[0],
             ve * vector[1],
@@ -129,68 +177,24 @@ class Robot:
         ]
         return new_v
 
-    def move_until_contact(self, direction, a=0.1, v=0.05, speed_threshold=0.003):
-
-        norm_dir = math.sqrt(direction[0] ** 2+direction[1] ** 2+direction[2] ** 2)
-        if norm_dir == 0:
-            raise ValueError("Вектор направления не может быть нулевым")
-        unit_dir = [d / norm_dir for d in direction]
-
-        self.send_urscript(f"speedl([0, 0, 0.05, 0, 0, 0], a={a}, t=3)")
-        # self.move_towards(direction, 50, a, v)
-
-        while True:
-            tcp_speed = self.get_tcp_speed()
-            if tcp_speed is None:
-                continue
-
-            lin_speed_norm = math.sqrt(tcp_speed[0] ** 2+tcp_speed[1] ** 2+tcp_speed[2] ** 2)
-            if lin_speed_norm < speed_threshold:
-                self.send_urscript("stopl(10.0)")
-                print("Контакт достигнут, движение остановлено")
-                break
-
-            time.sleep(0.05)
-
-
 robot = Robot(robotIP)
+
 robot.send_urscript("zero_ftsensor()")
-f = (robot.get_tcp_speed())
-print(f"1+{f}")
 robot.move("movej", "[1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209]", 0.05, 0.3)
 # robot.send_urscript(f"movej([1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], a=0.05, v=0.3)")
-
+# print(1)
 # Текущая TCP позиция робота (можно получить через RTDE/30003 или сохранить)
 current_pose = [.148176530408, -.770704002574, -.312483911963, .131255194183, -3.134044456313, .004624001678]
 # robot.send_urscript(f"movel(p[.148176530408, -.770704002574, -.012483911963, .131255194183, -3.134044456313, .004624001678], a=0.05, v=0.1)")
-d, v = robot.get_tcp_pose(), robot.move_kirill([0.0, 0.0, 1.0], 0.15)
-print(d, v)
-robot.send_urscript('textmsg("11111111111")')
 
-urscript = f"""
-force_mode({d}, 
-           {[0,0,1,0,0,0]},
-           {[0,0,10,0,0,0]},
-           2,
-           [{0.05}, {0.05}, {0.05}, 0.1, 0.1, 0.1])
-           
-sleep(0.5)
-end_force_mode()
-"""
-robot.send_urscript(f"force_mode(p{d},[0,0,-1,0,0,0],[0,0,50,0,0,0],2,[1,1,0.1,d2r(10),d2r(10),1])\n"
-                    f"sleep(0.5)\n"
-                    f"end_force_mode()\n")
-robot.send_urscript('textmsg("222222222222222")')
-robot.move_until_contact([0, 0, -1], a=0.1, v=0.05, speed_threshold=0.0007)
+direction = [0.0, 0.0, -1.0]  # движение вдоль оси Z
 
-# # Направление к объекту
-# direction = [0.0, 0.0, 1.0]  # движение вдоль оси Z
-#
-# # Расстояние движения
-# distance = 0.7  # 100 мм
-#
-# # Двигаем
+# Расстояние движения
+distance = 0.3  # 100 мм
+
+# Двигаем
 # robot.move_towards(direction, distance, a=1.0, v=0.1)
+robot.move_until_contact(direction)
 d = robot.get_tcp_pose()
 print(d)
 # robot.send_urscript("movej([0, -1.57, 0, -1.57, 0, 0], a=0.1, v=0.4)")
