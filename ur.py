@@ -21,6 +21,8 @@ class Robot:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((self.ip, self.port))
 
+        # self.s.sendall(b'conn.start_tool(tool_index=1)\n')
+
     # @classmethod
     # def degrees_to_radians(cls, corner: int):
     #     return corner * pi / 180
@@ -45,8 +47,9 @@ class Robot:
             # print(f)
 
     def send_urscript(self, cmd: str):
-        self.s.sendall((cmd + "\n").encode("utf-8"))
-        time.sleep(0.05)
+        d = self.s.sendall((cmd + "\n").encode("utf-8"))
+        time.sleep(0.5)
+        return d
 
     def move(self, type_of_move: str, final_pose: str, a: float, v: float):
         self.send_urscript(f"{type_of_move}({final_pose}, a={a}, v={v})")
@@ -115,13 +118,8 @@ class Robot:
         if len(data) < 48:
             return None
 
-        m_target = struct.unpack('!6d', data[204:204+48])
-
-        # ---- TCP force ----
-        # начинается с 540 байта
         tcp_force = struct.unpack('!6d', data[540:540+48])
 
-        # print("Joint torques (M target):", m_target)
         print("TCP forces:", tcp_force)
         return tcp_force # Fx, Fy, Fz, Tx, Ty, Tz
 
@@ -177,12 +175,14 @@ class Robot:
         ]
         return new_v
 
-robot = Robot(robotIP)
+robot = Robot(robotIP, port_now=30001)
+time.sleep(0.1)
+# print(robot.send_urscript("vg_get_status(tool_index=1, channel=2)"))
 
-robot.send_urscript("zero_ftsensor()")
+# robot.send_urscript("zero_ftsensor()")
 robot.move("movej", "[1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209]", 0.05, 0.3)
 # robot.send_urscript(f"movej([1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], a=0.05, v=0.3)")
-# print(1)
+
 # Текущая TCP позиция робота (можно получить через RTDE/30003 или сохранить)
 current_pose = [.148176530408, -.770704002574, -.312483911963, .131255194183, -3.134044456313, .004624001678]
 # robot.send_urscript(f"movel(p[.148176530408, -.770704002574, -.012483911963, .131255194183, -3.134044456313, .004624001678], a=0.05, v=0.1)")
@@ -195,6 +195,9 @@ distance = 0.3  # 100 мм
 # Двигаем
 # robot.move_towards(direction, distance, a=1.0, v=0.1)
 robot.move_until_contact(direction)
+
+time.sleep(0.5)
+
 d = robot.get_tcp_pose()
 print(d)
 # robot.send_urscript("movej([0, -1.57, 0, -1.57, 0, 0], a=0.1, v=0.4)")
