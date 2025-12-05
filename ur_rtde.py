@@ -3,7 +3,6 @@ import time
 import math
 
 try:
-    # наиболее распространённые импорты для RTDE-based control/receive
     from rtde_control import RTDEControlInterface
     from rtde_receive import RTDEReceiveInterface
 except Exception as e:
@@ -38,6 +37,12 @@ class RobotRTDE:
         except Exception:
             return False
 
+    def is_running(self):
+        try:
+            return self.rtde_c.isProgramRunning()
+        except AttributeError:
+            return None
+
     def get_tcp_pose(self):
         """Возвращает list [x,y,z,rx,ry,rz] или None"""
         try:
@@ -49,6 +54,12 @@ class RobotRTDE:
         """Возвращает list [Fx,Fy,Fz,Tx,Ty,Tz] или None"""
         try:
             return self.rtde_r.getActualTCPForce()
+        except Exception:
+            return None
+
+    def get_joint_angles(self):
+        try:
+            return self.rtde_r.getActualQ()
         except Exception:
             return None
 
@@ -73,14 +84,18 @@ class RobotRTDE:
             # fallback: послать через rtde_c.sendScript или использовать move commands
             raise
 
-    def stop(self, a=0.2):
+    def stop(self, a=0.3):
         try:
-            self.rtde_c.stopL(a)
+            # Плавно задать нулевую скорость — это НЕ вызывает ошибок даже если speedL не запущена
+            self.rtde_c.speedStop(a)
         except Exception:
-            # fallback: ничего не делаем — caller должен обработать
+            # если stopL не подходит (например, после moveJ), просто игнорируем
             pass
 
-    def move_until_contact(self, direction, force_threshold=30.0, max_time=5.0, a=0.05, v=0.05):
+        # Небольшая стабилизация
+        time.sleep(0.05)
+
+    def move_until_contact(self, direction, force_threshold=30.0, max_time=10.0, a=0.05, v=0.05):
         """
         Движение по вектору direction [dx,dy,dz] до превышения силы.
         Контроль по RTDE force. max_time защищает от "ухода".
@@ -105,15 +120,18 @@ class RobotRTDE:
                 Fx, Fy, Fz = forces[0], forces[1], forces[2]
                 force = math.sqrt(Fx*Fx + Fy*Fy + Fz*Fz)
                 if force > force_threshold:
-                    # мягкая остановка
-                    self.stop(a=0.2)
+                    print("contact")
+                    self.rtde_c.speedStop(0.2)
+                    time.sleep(0.1)
                     return True
-                if time.time() - start_time > max_time:
-                    # timeout — безопасная остановка и выход
+                if time.time()-start_time > max_time:
+                    print("timeout")
                     self.stop(a=0.2)
+                    time.sleep(0.1)
                     return False
                 time.sleep(0.01)
         finally:
+            pass
             # убедиться, что скорость остановлена
             try:
                 self.stop(a=0.2)
@@ -135,15 +153,27 @@ class RobotRTDE:
             pass
 
 
-# robotIP = "172.17.0.2:6800"
+robotIP = "10.162.3.228"
 PRIMARY_PORT = 30001
 SECONDARY_PORT = 30002
 REALTIME_PORT = 30003
+base_point = [0, -1.57, 0, -1.57, 0, 0]
 
-robotIP = "ursim"
 robot = RobotRTDE(robotIP)
 print(robot.get_tcp_pose())
+print(robot.get_joint_angles())
 
-robot.move("movej", [.148176530408, -.770704002574, -.312483911963, .131255194183, -3.134044456313, .004624001678])
-time.sleep(10)
+
+robot.move("movej", [1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], v=0.15)
+
+direction = [0.0, 0.0, -1.0]
+s = robot.move_until_contact(direction)
+print(s)
+
+time.sleep(2)
+robot.move("movej", base_point, v=0.1)
 print(robot.get_tcp_pose())
+print(robot.get_joint_angles())
+
+
+robot.close()
