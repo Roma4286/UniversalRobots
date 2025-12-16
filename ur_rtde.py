@@ -9,8 +9,10 @@ try:
 except Exception as e:
     raise ImportError("Не удалось импортировать RTDE-клиент. Установи rtde/ur-rtde. Ошибка: " + str(e))
 
+from config import ROBOT_IP, DASHBOARD_PORT, SECONDARY_PORT, RTDE_RECEIVE_PORT, GRIP_PROGRAM, RELEASE_PROGRAM, BASE_POINT
+
 class Tool:
-    def __init__(self, host, port=29999, delay=0.5):
+    def __init__(self, host, port=DASHBOARD_PORT, delay=0.5):
         self.host = host
         self.port = port
         self.delay = delay
@@ -44,7 +46,7 @@ class Tool:
 
 
 class RobotRTDE:
-    def __init__(self, host, port_control=30002, port_receive=30004, timeout=5.0):
+    def __init__(self, host, port_control=SECONDARY_PORT, port_receive=RTDE_RECEIVE_PORT, timeout=5.0):
         self.host = host
         self.timeout = timeout
 
@@ -59,7 +61,6 @@ class RobotRTDE:
 
     def is_connected(self):
         try:
-            # простая проверка чтения
             _ = self.rtde_r.getActualTCPPose()
             return True
         except Exception:
@@ -143,8 +144,6 @@ class RobotRTDE:
                     return False
                 time.sleep(0.01)
         finally:
-            pass
-            # убедиться, что скорость остановлена
             try:
                 self.stop(a=0.2)
             except Exception:
@@ -164,15 +163,8 @@ class RobotRTDE:
         except Exception:
             pass
 
-
-robotIP = "10.162.3.228"
-PRIMARY_PORT = 30001
-SECONDARY_PORT = 30002
-REALTIME_PORT = 30003
-base_point = [0, -1.57, 0, -1.57, 0, 0]
-
-robot = RobotRTDE(robotIP)
-tool = Tool(robotIP)
+robot = RobotRTDE(ROBOT_IP)
+tool = Tool(ROBOT_IP)
 
 pose = robot.get_joint_angles()
 robot.move("movej", [1.524572491645813, -0.9488840264132996, 1.3860052267657679, -2.0061055622496546, -1.5892236868487757, -0.0950844923602503], v=0.05)
@@ -180,10 +172,10 @@ robot.move("movej", [1.524572491645813, -0.9488840264132996, 1.3860052267657679,
 direction = [0.0, 0.0, -1.0]
 robot.move_until_contact(direction)
 
-tool.grip("Zahvat.urp")
+tool.grip(GRIP_PROGRAM)
 time.sleep(1)
 robot.move("movej", [1.524572491645813, -0.9488840264132996, 1.3860052267657679, -2.0061055622496546, -1.5892236868487757, -0.0950844923602503], v=0.05)
 time.sleep(1)
-tool.release("Othvat.urp")
+tool.release(RELEASE_PROGRAM)
 
 robot.close()

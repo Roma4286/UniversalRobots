@@ -3,15 +3,10 @@ import time
 import math
 import struct
 
-robotIP = "10.162.3.228"
-PRIMARY_PORT = 30001
-SECONDARY_PORT = 30002
-REALTIME_PORT = 30003
-
-base_point = f"[0, -1.57, 0, -1.57, 0, 0]"
+from config import ROBOT_IP, PRIMARY_PORT, SECONDARY_PORT, REALTIME_PORT, BASE_POINT
 
 class Robot:
-    def __init__(self, ip, primary_port = 30001, secondary_port = 30002, realtime_port = 30003, port_now = 30001):
+    def __init__(self, ip, primary_port = PRIMARY_PORT, secondary_port = SECONDARY_PORT, realtime_port = REALTIME_PORT, port_now = PRIMARY_PORT):
         self.ip = ip
         self.primary_port = primary_port
         self.secondary_port = secondary_port
@@ -20,8 +15,6 @@ class Robot:
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((self.ip, self.port))
-
-        # self.s.sendall(b'conn.start_tool(tool_index=1)\n')
 
     # @classmethod
     # def degrees_to_radians(cls, corner: int):
@@ -175,9 +168,9 @@ class Robot:
         ]
         return new_v
 
-robot = Robot(robotIP, port_now=30002)
+robot = Robot(ROBOT_IP, port_now=SECONDARY_PORT)
 time.sleep(1)
-robot.move("movej", base_point, 0.2, 0.2)
+robot.move("movej", f"{BASE_POINT}", 0.2, 0.2)
 # time.sleep(10)
 # with open("Robot/Robot1.script", "r", encoding="utf-8") as f:
 #     urscript_code = f.read()
