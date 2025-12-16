@@ -106,6 +106,28 @@ class RobotRTDE:
 
         time.sleep(0.05)
 
+    def move_towards(self, vector, distance, a=0.1, v=0.2):
+        current_pose = self.get_tcp_pose()
+        if current_pose is None:
+            raise RuntimeError("Не удалось получить текущую позицию TCP")
+
+        norm = math.sqrt(vector[0] ** 2+vector[1] ** 2+vector[2] ** 2)
+        if norm == 0:
+            raise ValueError("Zero direction vector")
+
+        scale = distance / norm
+
+        new_pose = [
+            current_pose[0]+vector[0] * scale,  # x
+            current_pose[1]+vector[1] * scale,  # y
+            current_pose[2]+vector[2] * scale,  # z
+            current_pose[3],  # rx
+            current_pose[4],  # ry
+            current_pose[5]  # rz
+        ]
+
+        self.move("movel", new_pose, a, v)
+
     def move_until_contact(self, direction, force_threshold=30.0, max_time=10.0, a=0.05, v=0.05):
         start_time = time.time()
         norm = math.sqrt(sum(c*c for c in direction))
@@ -143,7 +165,7 @@ class RobotRTDE:
 
     def close(self):
         try:
-            self.rtde_c.stopScript()  # если есть
+            self.rtde_c.stopScript()
         except Exception:
             pass
         try:

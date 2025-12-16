@@ -10,6 +10,9 @@ class Robot:
     def move(self, move_type, target, a=1.0, v=0.1):
         return self.rtde.move(move_type, target, a, v)
 
+    def move_towards(self, vector, distance, a=0.1, v=0.2):
+        return self.rtde.move_towards(vector, distance, a, v)
+
     def get_tcp_pose(self):
         return self.rtde.get_tcp_pose()
 
