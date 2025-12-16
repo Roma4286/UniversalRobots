@@ -24,6 +24,33 @@ class RobotRTDE:
         if not self.is_connected():
             raise RuntimeError("Не удалось подключиться к RTDE интерфейсу на " + self.host)
 
+    def reconnect(self, retries=3, delay=1.0):
+        for attempt in range(1, retries+1):
+            try:
+                print(f"[Reconnect] Попытка {attempt} подключения к {self.host}...")
+                self.close()
+                print(1)
+
+                self.rtde_r = RTDEReceiveInterface(self.host, RTDE_RECEIVE_PORT)
+                print(2)
+                self.rtde_c = RTDEControlInterface(self.host, SECONDARY_PORT)
+                print(3)
+                self.rtde_o = RTDEIOInterface(self.host)
+                print(4)
+                time.sleep(0.1)
+
+                if self.is_connected():
+                    print("[Reconnect] Подключение успешно")
+                    return True
+                else:
+                    print("[Reconnect] Подключение не удалось")
+            except Exception as e:
+                print(f"[Reconnect] Ошибка: {e}")
+
+            time.sleep(delay)
+
+        raise RuntimeError(f"Не удалось подключиться к RTDE интерфейсу на {self.host} после {retries} попыток")
+
     def is_connected(self):
         try:
             _ = self.rtde_r.getActualTCPPose()
@@ -125,5 +152,9 @@ class RobotRTDE:
             pass
         try:
             self.rtde_r.disconnect()
+        except Exception:
+            pass
+        try:
+            self.rtde_o.disconnect()
         except Exception:
             pass
