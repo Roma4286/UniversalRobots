@@ -1,6 +1,5 @@
 import time
 import math
-import socket
 
 try:
     from rtde_control import RTDEControlInterface
@@ -9,41 +8,7 @@ try:
 except Exception as e:
     raise ImportError("Не удалось импортировать RTDE-клиент. Установи rtde/ur-rtde. Ошибка: " + str(e))
 
-from config import ROBOT_IP, DASHBOARD_PORT, SECONDARY_PORT, RTDE_RECEIVE_PORT, GRIP_PROGRAM, RELEASE_PROGRAM, BASE_POINT
-
-class Tool:
-    def __init__(self, host, port=DASHBOARD_PORT, delay=0.5):
-        self.host = host
-        self.port = port
-        self.delay = delay
-        self.sock = socket.socket()
-        self.connect()
-
-    def connect(self):
-        self.sock.connect((self.host, self.port))
-        print(self.sock.recv(1024).decode().strip())
-
-    def _dashboard_send_cmd(self, cmd):
-        self.sock.sendall((cmd + "\n").encode())
-        resp = self.sock.recv(1024).decode().strip()
-        print(f"> {cmd} -> {resp}")
-        time.sleep(self.delay)
-        return resp
-
-    def grip(self, name_file: str):
-        self._dashboard_send_cmd("stop")
-        self._dashboard_send_cmd(f"load {name_file}")
-        self._dashboard_send_cmd("play")
-
-    def release(self, name_file: str):
-        self._dashboard_send_cmd("stop")
-        self._dashboard_send_cmd(f"load {name_file}")
-        self._dashboard_send_cmd("play")
-
-    def close(self):
-        self.sock.close()
-
-
+from config import SECONDARY_PORT, RTDE_RECEIVE_PORT
 
 class RobotRTDE:
     def __init__(self, host, port_control=SECONDARY_PORT, port_receive=RTDE_RECEIVE_PORT, timeout=5.0):
@@ -162,20 +127,3 @@ class RobotRTDE:
             self.rtde_r.disconnect()
         except Exception:
             pass
-
-robot = RobotRTDE(ROBOT_IP)
-tool = Tool(ROBOT_IP)
-
-pose = robot.get_joint_angles()
-robot.move("movej", [1.524572491645813, -0.9488840264132996, 1.3860052267657679, -2.0061055622496546, -1.5892236868487757, -0.0950844923602503], v=0.05)
-
-direction = [0.0, 0.0, -1.0]
-robot.move_until_contact(direction)
-
-tool.grip(GRIP_PROGRAM)
-time.sleep(1)
-robot.move("movej", [1.524572491645813, -0.9488840264132996, 1.3860052267657679, -2.0061055622496546, -1.5892236868487757, -0.0950844923602503], v=0.05)
-time.sleep(1)
-tool.release(RELEASE_PROGRAM)
-
-robot.close()
