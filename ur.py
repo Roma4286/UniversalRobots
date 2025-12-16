@@ -175,32 +175,13 @@ class Robot:
         ]
         return new_v
 
-robot = Robot(robotIP, port_now=30001)
-time.sleep(0.1)
-# print(robot.send_urscript("vg_get_status(tool_index=1, channel=2)"))
+robot = Robot(robotIP, port_now=30002)
+time.sleep(1)
+robot.move("movej", base_point, 0.2, 0.2)
+# time.sleep(10)
+# with open("Robot/Robot1.script", "r", encoding="utf-8") as f:
+#     urscript_code = f.read()
 
-# robot.send_urscript("zero_ftsensor()")
-robot.move("movej", "[1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209]", 0.05, 0.3)
-# robot.send_urscript(f"movej([1.5399072170257568, -0.2457065147212525, 1.2899506727801722, -2.6184002361693324, -1.5765298048602503, -0.11803323427309209], a=0.05, v=0.3)")
-
-# Текущая TCP позиция робота (можно получить через RTDE/30003 или сохранить)
-current_pose = [.148176530408, -.770704002574, -.312483911963, .131255194183, -3.134044456313, .004624001678]
-# robot.send_urscript(f"movel(p[.148176530408, -.770704002574, -.012483911963, .131255194183, -3.134044456313, .004624001678], a=0.05, v=0.1)")
-
-direction = [0.0, 0.0, -1.0]  # движение вдоль оси Z
-
-# Расстояние движения
-distance = 0.3  # 100 мм
-
-# Двигаем
-# robot.move_towards(direction, distance, a=1.0, v=0.1)
-robot.move_until_contact(direction)
-
-time.sleep(0.5)
-
-d = robot.get_tcp_pose()
-print(d)
-# robot.send_urscript("movej([0, -1.57, 0, -1.57, 0, 0], a=0.1, v=0.4)")
-robot.move("movej", base_point, 0.1, 0.4)
-
+# robot.send_urscript(urscript_code)
+time.sleep(5)
 robot.close_connect()

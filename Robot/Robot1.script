@@ -1595,7 +1595,6 @@ def unnamed():
     $ 3 "Контр_точка_1" "breakAfter"
     movel(u1050u1086u1085u1090u1088_u1090u1086u1095u1082u1072_1_p, a=0.1, v=0.8)
     $ 4 "Контр_точка_2" "breakAfter"
-    movel(u1050u1086u1085u1090u1088_u1090u1086u1095u1082u1072_2_p, a=0.1, v=0.8)
     $ 5 "Направление: Инструмент Z+"
     global move_thread_flag_5=0
     thread move_thread_5():
