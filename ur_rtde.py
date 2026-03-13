@@ -27,16 +27,11 @@ class RobotRTDE:
     def reconnect(self, retries=3, delay=1.0):
         for attempt in range(1, retries+1):
             try:
-                print(f"[Reconnect] Попытка {attempt} подключения к {self.host}...")
                 self.close()
-                print(1)
 
                 self.rtde_r = RTDEReceiveInterface(self.host, RTDE_RECEIVE_PORT)
-                print(2)
                 self.rtde_c = RTDEControlInterface(self.host, SECONDARY_PORT)
-                print(3)
                 self.rtde_o = RTDEIOInterface(self.host)
-                print(4)
                 time.sleep(0.1)
 
                 if self.is_connected():
@@ -86,7 +81,8 @@ class RobotRTDE:
 
     def move(self, move_type: str, target, a=1.0, v=0.1):
         if move_type.lower() == "movej":
-            return self.rtde_c.moveJ(target, speed=v, acceleration=a)
+            self.rtde_c.moveJ(target, speed=v, acceleration=a)
+            return self.stop(a=0.2)
         elif move_type.lower() == "movel" or move_type.lower() == "movel":
             return self.rtde_c.moveL(target, speed=v, acceleration=a)
         else:
@@ -129,6 +125,9 @@ class RobotRTDE:
         self.move("movel", new_pose, a, v)
 
     def move_until_contact(self, direction, force_threshold=30.0, max_time=10.0, a=0.05, v=0.05):
+        self.rtde_c.zeroFtSensor()
+        time.sleep(0.1)
+
         start_time = time.time()
         norm = math.sqrt(sum(c*c for c in direction))
         if norm == 0:
@@ -162,6 +161,9 @@ class RobotRTDE:
                 self.stop(a=0.2)
             except Exception:
                 pass
+
+    def parse_bits(self, count: int = 18) -> dict:
+        return {f"DI{i}": (self.rtde_r.getActualDigitalInputBits() >> i) & 1 for i in range(count)}
 
     def close(self):
         try:

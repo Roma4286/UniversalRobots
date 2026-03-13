@@ -6,7 +6,6 @@ class Robot:
         self.rtde = RobotRTDE(host)
         self.tool = Tool(host)
 
-    # Методы движения
     def move(self, move_type, target, a=1.0, v=0.1):
         return self.rtde.move(move_type, target, a, v)
 
@@ -19,10 +18,12 @@ class Robot:
     def get_joint_angles(self):
         return self.rtde.get_joint_angles()
 
-    def move_until_contact(self, direction, force_threshold=30.0, max_time=10.0, a=0.05, v=0.05):
+    def move_until_contact(self, direction, force_threshold=30.0, max_time=15.0, a=0.05, v=0.05):
         return self.rtde.move_until_contact(direction, force_threshold, max_time, a, v)
 
-    # Методы работы с инструментом
+    def parse_bits_DI(self, count: int = 18):
+        return self.rtde.parse_bits(count=count)
+
     def grip(self, name_file):
         self.tool.grip(name_file)
         self.rtde.reconnect()
@@ -31,7 +32,6 @@ class Robot:
         self.tool.release(name_file)
         self.rtde.reconnect()
 
-    # Закрытие
     def close(self):
         self.rtde.close()
         self.tool.close()
