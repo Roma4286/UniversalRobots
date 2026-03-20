@@ -46,6 +46,12 @@ class RobotRTDE:
 
         raise RuntimeError(f"Не удалось подключиться к RTDE интерфейсу на {self.host} после {retries} попыток")
 
+    def move_until_contact1(self):
+        xd = [0, 0, -0.05, 0, 0, 0]
+        direction = [0, 0, -1, 0, 0, 0]
+
+        return self.rtde_c.moveUntilContact(xd, direction=direction, acceleration=0.5)
+
     def is_connected(self):
         try:
             _ = self.rtde_r.getActualTCPPose()
@@ -161,6 +167,34 @@ class RobotRTDE:
                 self.stop(a=0.2)
             except Exception:
                 pass
+
+    def move_circle_xy(self, center, radius, steps=200, a=0.5, v=0.05):
+        pose = self.get_tcp_pose()
+
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+
+        for i in range(steps):
+            theta = 4 * math.pi * i / steps
+
+            x = cx+radius * math.cos(theta)
+            y = cy+radius * math.sin(theta)
+
+            path.append([x, y, z, rx, ry, rz, v, a, 0.0])
+
+        # ❗ явно замыкаем
+        x0 = cx+radius
+        y0 = cy
+        path.append([x0, y0, z, rx, ry, rz, v, a, 0.0])
+
+        self.rtde_c.moveL(path)
+
+        # ❗ дожим
+        self.rtde_c.moveL([x0, y0, z, rx, ry, rz], v, a)
 
     def parse_bits(self, count: int = 18) -> dict:
         return {f"DI{i}": (self.rtde_r.getActualDigitalInputBits() >> i) & 1 for i in range(count)}

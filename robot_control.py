@@ -21,6 +21,9 @@ class Robot:
     def move_until_contact(self, direction, force_threshold=30.0, max_time=15.0, a=0.05, v=0.05):
         return self.rtde.move_until_contact(direction, force_threshold, max_time, a, v)
 
+    def move_circle_xy(self, center, radius, steps=100, a=0.5, v=0.05):
+        return self.rtde.move_circle_xy(center, radius, steps=steps, a=a, v=v)
+
     def parse_bits_DI(self, count: int = 18):
         return self.rtde.parse_bits(count=count)
 
