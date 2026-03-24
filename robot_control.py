@@ -1,3 +1,5 @@
+from fontTools.misc.cython import returns
+
 from ur_rtde import RobotRTDE
 from ur_tool import Tool
 
@@ -23,6 +25,12 @@ class Robot:
 
     def move_circle_xy(self, center, radius, steps=100, a=0.5, v=0.05):
         return self.rtde.move_circle_xy(center, radius, steps=steps, a=a, v=v)
+
+    def move_spiral_xy(self, center, turns=3, steps=400, k=0.002, a=0.5, v=0.05):
+        return self.rtde.move_spiral_xy(center, turns, steps, k, a, v)
+
+    def move_flower_4_triangles(self, center, side=0.05, a=0.5, v=0.05):
+        return self.rtde.move_flower_4_triangles(center, side, a, v)
 
     def parse_bits_DI(self, count: int = 18):
         return self.rtde.parse_bits(count=count)

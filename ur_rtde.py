@@ -94,6 +94,86 @@ class RobotRTDE:
         else:
             raise ValueError("Unsupported move type: " + move_type)
 
+    def move_spiral_xy(self, center, turns=3, steps=400, k=0.002, a=0.5, v=0.05):
+        pose = self.get_tcp_pose()
+
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+
+        for i in range(steps):
+            theta = 2 * math.pi * turns * i / steps
+
+            r = k * theta
+
+            x = cx+r * math.cos(theta)
+            y = cy+r * math.sin(theta)
+
+            path.append([x, y, z, rx, ry, rz, v, a, 0.002])  # ← blending!
+
+        # финальная точка
+        theta = 2 * math.pi * turns
+        r = k * theta
+        x = cx+r * math.cos(theta)
+        y = cy+r * math.sin(theta)
+
+        path.append([x, y, z, rx, ry, rz, v, a, 0.0])
+
+        self.rtde_c.moveL(path)
+
+        # дожим
+        self.rtde_c.moveL([x, y, z, rx, ry, rz], v, a)
+
+    def move_flower_4_triangles(self, center, side=0.05, a=0.5, v=0.05):
+        """
+        Рисует "цветок" из 4 равносторонних треугольников
+
+        center — [cx, cy]
+        side — длина стороны треугольника (в метрах)
+        """
+
+        pose = self.get_tcp_pose()
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+
+        # высота равностороннего треугольника
+        h = side * math.sqrt(3) / 2
+
+        # 4 направления (в радианах)
+        angles = [0, math.pi / 2, math.pi, 3 * math.pi / 2]
+
+        for angle in angles:
+            # направление "наружу"
+            dx = math.cos(angle)
+            dy = math.sin(angle)
+
+            # перпендикуляр (для ширины треугольника)
+            px = -dy
+            py = dx
+
+            # вершины треугольника
+            p1 = [cx, cy]  # центр
+            p2 = [cx+dx * h+px * side / 2, cy+dy * h+py * side / 2]
+            p3 = [cx+dx * h-px * side / 2, cy+dy * h-py * side / 2]
+
+            # добавляем в path (с blending)
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+
+        # финальная точка без blending
+        path[-1][-1] = 0.0
+
+        self.rtde_c.moveL(path)
+
     def speedl(self, tcp_speed, a=0.1, t=10.0):
         try:
             return self.rtde_c.speedL(tcp_speed, a, t)

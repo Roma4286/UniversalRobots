@@ -22,7 +22,7 @@ from robot_control import Robot
 # robot.close()
 
 import math
-
+import time
 
 def move_triangle(robot: Robot, side_length=0.005, a=0.3, v=0.02):
     """
@@ -53,8 +53,12 @@ def move_triangle(robot: Robot, side_length=0.005, a=0.3, v=0.02):
 
 if __name__ == "__main__":
     robot = Robot(ROBOT_IP)  # IP робота
-
+    pose = robot.get_tcp_pose()
+    time.sleep(3)
+    center = [pose[0], pose[1]]
+    print(center)
     try:
-        move_triangle(robot, side_length=0.05)  # 5 см
+        # robot.move_spiral_xy(center, v=0.05)
+        robot.move_flower_4_triangles(center, side=0.02, v=0.01)
     finally:
         robot.close()
