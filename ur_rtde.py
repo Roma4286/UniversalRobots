@@ -112,9 +112,8 @@ class RobotRTDE:
             x = cx+r * math.cos(theta)
             y = cy+r * math.sin(theta)
 
-            path.append([x, y, z, rx, ry, rz, v, a, 0.002])  # ← blending!
+            path.append([x, y, z, rx, ry, rz, v, a, 0.002])
 
-        # финальная точка
         theta = 2 * math.pi * turns
         r = k * theta
         x = cx+r * math.cos(theta)
@@ -124,7 +123,6 @@ class RobotRTDE:
 
         self.rtde_c.moveL(path)
 
-        # дожим
         self.rtde_c.moveL([x, y, z, rx, ry, rz], v, a)
 
     def move_flower_4_triangles(self, center, side=0.05, a=0.5, v=0.05):
@@ -143,36 +141,51 @@ class RobotRTDE:
 
         path = []
 
-        # высота равностороннего треугольника
         h = side * math.sqrt(3) / 2
 
-        # 4 направления (в радианах)
         angles = [0, math.pi / 2, math.pi, 3 * math.pi / 2]
 
         for angle in angles:
-            # направление "наружу"
             dx = math.cos(angle)
             dy = math.sin(angle)
 
-            # перпендикуляр (для ширины треугольника)
             px = -dy
             py = dx
 
-            # вершины треугольника
             p1 = [cx, cy]  # центр
             p2 = [cx+dx * h+px * side / 2, cy+dy * h+py * side / 2]
             p3 = [cx+dx * h-px * side / 2, cy+dy * h-py * side / 2]
 
-            # добавляем в path (с blending)
             path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
             path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])
             path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])
             path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
 
-        # финальная точка без blending
         path[-1][-1] = 0.0
 
         self.rtde_c.moveL(path)
+
+    def move_triangle(self, side_length=0.005, a=0.3, v=0.02):
+        """
+        Движение по равностороннему треугольнику в плоскости XY
+
+        side_length — длина стороны (в метрах, 0.05 = 5 см)
+        """
+        time.sleep(4)
+
+        start_pose = self.get_tcp_pose()  # [x, y, z, rx, ry, rz]
+
+        x0, y0, z0, rx, ry, rz = start_pose
+
+        p1 = [x0, y0, z0, rx, ry, rz]
+        p2 = [x0+side_length, y0, z0, rx, ry, rz]
+
+        height = side_length * math.sqrt(3) / 2
+        p3 = [x0+side_length / 2, y0+height, z0, rx, ry, rz]
+
+        self.move("movel", p2, a, v)
+        self.move("movel", p3, a, v)
+        self.move("movel", p1, a, v)
 
     def speedl(self, tcp_speed, a=0.1, t=10.0):
         try:

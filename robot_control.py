@@ -32,6 +32,9 @@ class Robot:
     def move_flower_4_triangles(self, center, side=0.05, a=0.5, v=0.05):
         return self.rtde.move_flower_4_triangles(center, side, a, v)
 
+    def move_triangle(self, side_length=0.005, a=0.3, v=0.02):
+        return self.move_triangle(side_length=side_length, a=a, v=v)
+
     def parse_bits_DI(self, count: int = 18):
         return self.rtde.parse_bits(count=count)
 
