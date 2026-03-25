@@ -125,13 +125,7 @@ class RobotRTDE:
 
         self.rtde_c.moveL([x, y, z, rx, ry, rz], v, a)
 
-    def move_flower_4_triangles(self, center, side=0.05, a=0.5, v=0.05):
-        """
-        Рисует "цветок" из 4 равносторонних треугольников
-
-        center — [cx, cy]
-        side — длина стороны треугольника (в метрах)
-        """
+    def move_flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
 
         pose = self.get_tcp_pose()
         z = pose[2]
@@ -140,10 +134,10 @@ class RobotRTDE:
         cx, cy = center
 
         path = []
-
-        h = side * math.sqrt(3) / 2
-
-        angles = [0, math.pi / 2, math.pi, 3 * math.pi / 2]
+        half_base = (side*0.6)/2
+        h = math.sqrt(pow(side, 2) - pow(half_base, 2))
+        degree_angle = math.pi/3
+        angles = [0, degree_angle, degree_angle*2, degree_angle*3, degree_angle*4, degree_angle*5]
 
         for angle in angles:
             dx = math.cos(angle)
