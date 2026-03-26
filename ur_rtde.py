@@ -125,7 +125,38 @@ class RobotRTDE:
 
         self.rtde_c.moveL([x, y, z, rx, ry, rz], v, a)
 
-    def move_flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+    def move_4flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+
+        pose = self.get_tcp_pose()
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+        h = side*(math.sqrt(3)/2)
+        angles = [0, math.pi/2, math.pi, math.pi*3/2]
+
+        for angle in angles:
+            dx = math.cos(angle)
+            dy = math.sin(angle)
+
+            px = -dy
+            py = dx
+
+            p1 = [cx, cy]  # центр
+            p2 = [cx+dx * h+px * side / 2, cy+dy * h+py * side / 2]
+            p3 = [cx+dx * h-px * side / 2, cy+dy * h-py * side / 2]
+
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+
+        path[-1][-1] = 0.0
+
+        self.rtde_c.moveL(path)
+    def move_6flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
 
         pose = self.get_tcp_pose()
         z = pose[2]
@@ -138,6 +169,40 @@ class RobotRTDE:
         h = math.sqrt(pow(side, 2) - pow(half_base, 2))
         degree_angle = math.pi/3
         angles = [0, degree_angle, degree_angle*2, degree_angle*3, degree_angle*4, degree_angle*5]
+
+        for angle in angles:
+            dx = math.cos(angle)
+            dy = math.sin(angle)
+
+            px = -dy
+            py = dx
+
+            p1 = [cx, cy]  # центр
+            p2 = [cx+dx * h+px * side / 2, cy+dy * h+py * side / 2]
+            p3 = [cx+dx * h-px * side / 2, cy+dy * h-py * side / 2]
+
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+
+        path[-1][-1] = 0.0
+
+        self.rtde_c.moveL(path)
+
+    def move_8flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+
+        pose = self.get_tcp_pose()
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+        half_base = (side*0.4)/2
+        h = math.sqrt(pow(side, 2) - pow(half_base, 2))
+        degree_angle = math.pi/4
+        angles = [0, degree_angle, degree_angle*2, degree_angle*3, degree_angle*4, degree_angle*5, degree_angle*6, degree_angle*7]
 
         for angle in angles:
             dx = math.cos(angle)

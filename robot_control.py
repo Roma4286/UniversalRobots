@@ -29,8 +29,14 @@ class Robot:
     def move_spiral_xy(self, center, turns=3, steps=400, k=0.002, a=0.5, v=0.05):
         return self.rtde.move_spiral_xy(center, turns, steps, k, a, v)
 
-    def move_flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
-        return self.rtde.move_flower_triangles(center, side, a, v)
+    def move_4flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+        return self.rtde.move_4flower_triangles(center, side, a, v)
+
+    def move_6flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+        return self.rtde.move_6flower_triangles(center, side, a, v)
+
+    def move_8flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+        return self.rtde.move_8flower_triangles(center, side, a, v)
 
     def move_triangle(self, side_length=0.005, a=0.3, v=0.02):
         return self.move_triangle(side_length=side_length, a=a, v=v)
