@@ -199,7 +199,7 @@ class RobotRTDE:
         cx, cy = center
 
         path = []
-        half_base = (side*0.4)/2
+        half_base = (side*0.1)/2
         h = math.sqrt(pow(side, 2) - pow(half_base, 2))
         degree_angle = math.pi/4
         angles = [0, degree_angle, degree_angle*2, degree_angle*3, degree_angle*4, degree_angle*5, degree_angle*6, degree_angle*7]
@@ -245,6 +245,44 @@ class RobotRTDE:
         self.move("movel", p2, a, v)
         self.move("movel", p3, a, v)
         self.move("movel", p1, a, v)
+
+    def move_5point_star(self, center, outer_radius=0.05, inner_radius=0.02, a=0.5, v=0.05):
+
+        pose = self.get_tcp_pose()
+        z = pose[2]
+        rx, ry, rz = pose[3:]
+
+        cx, cy = center
+
+        path = []
+
+        angles = []
+        for i in range(5):
+            angle = math.pi / 2 - i * 2 * math.pi / 5
+            angles.append(angle)
+
+        star_points = []
+
+        for i in range(5):
+            outer_angle = angles[i]
+            x_outer = cx + outer_radius * math.cos(outer_angle)
+            y_outer = cy + outer_radius * math.sin(outer_angle)
+            star_points.append([x_outer, y_outer])
+
+            inner_angle = angles[i] - math.pi / 5
+            x_inner = cx + inner_radius * math.cos(inner_angle)
+            y_inner = cy + inner_radius * math.sin(inner_angle)
+            star_points.append([x_inner, y_inner])
+
+        star_points.append(star_points[0])
+
+        for point in star_points:
+            path.append([point[0], point[1], z, rx, ry, rz, v, a, 0.002])
+
+        if path:
+            path[-1][-1] = 0.0
+
+        self.rtde_c.moveL(path)
 
     def speedl(self, tcp_speed, a=0.1, t=10.0):
         try:

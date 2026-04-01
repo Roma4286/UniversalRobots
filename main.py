@@ -27,9 +27,9 @@ if __name__ == "__main__":
     try:
         # robot.move_spiral_xy(center, v=0.05)
         # robot.move_4flower_triangles(center, side=0.02, v=0.01)
-        # robot.move_6flower_triangles(center, side=0.02, v=0.01)
+        robot.move_6flower_triangles(center, side=0.02, v=0.01)
         # robot.move_8flower_triangles(center, side=0.02, v=0.01)
         # robot.move_triangle(0.005, v=0.5)
-        robot.move_circle_xy(center, radius=0.05, v=0.05)
+        # robot.move_circle_xy(center, radius=0.05, v=0.05)
     finally:
         robot.close()
