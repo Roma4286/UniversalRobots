@@ -33,8 +33,8 @@ class Robot:
     def move_6flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
         return self.rtde.move_6flower_triangles(center, side, a, v)
 
-    def move_8flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
-        return self.rtde.move_8flower_triangles(center, side, a, v)
+    def move_flower_triangles(self, center, n_petals=8, side=0.05, a=0.5, v=0.05):
+        return self.rtde.move_flower_triangles(center, n_petals, side, a, v)
 
     def move_triangle(self, side_length=0.005, a=0.3, v=0.02):
         return self.move_triangle(side_length=side_length, a=a, v=v)

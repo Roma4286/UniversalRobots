@@ -190,8 +190,17 @@ class RobotRTDE:
 
         self.rtde_c.moveL(path)
 
-    def move_8flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
+    def move_flower_triangles(self, center, n_petals=8, side=0.05, a=0.5, v=0.1):
+        """
+        Рисует цветок с заданным числом треугольных лепестков
 
+        Args:
+            center: центр цветка (x, y)
+            n_petals: количество лепестков (по умолчанию 8)
+            side: размер стороны треугольника
+            a: ускорение
+            v: скорость
+        """
         pose = self.get_tcp_pose()
         z = pose[2]
         rx, ry, rz = pose[3:]
@@ -199,28 +208,36 @@ class RobotRTDE:
         cx, cy = center
 
         path = []
-        half_base = (side*0.1)/2
+        half_base = (side * 0.01) / 2
         h = math.sqrt(pow(side, 2) - pow(half_base, 2))
-        degree_angle = math.pi/4
-        angles = [0, degree_angle, degree_angle*2, degree_angle*3, degree_angle*4, degree_angle*5, degree_angle*6, degree_angle*7]
+
+        # Равномерно распределяем углы для заданного числа лепестков
+        angle_step = 2 * math.pi / n_petals
+        angles = [i * angle_step for i in range(n_petals)]
 
         for angle in angles:
             dx = math.cos(angle)
             dy = math.sin(angle)
 
+            # Перпендикулярный вектор для основания треугольника
             px = -dy
             py = dx
 
-            p1 = [cx, cy]  # центр
-            p2 = [cx+dx * h+px * side / 2, cy+dy * h+py * side / 2]
-            p3 = [cx+dx * h-px * side / 2, cy+dy * h-py * side / 2]
+            p1 = [cx, cy]  # центр (вершина треугольника)
+            p2 = [cx + dx * h + px * side / 2,
+                  cy + dy * h + py * side / 2]  # правое основание
+            p3 = [cx + dx * h - px * side / 2,
+                  cy + dy * h - py * side / 2]  # левое основание
 
-            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
-            path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])
-            path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])
-            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])
+            # Добавляем точки для рисования треугольника
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])  # к центру
+            path.append([p2[0], p2[1], z, rx, ry, rz, v, a, 0.002])  # к правому
+            path.append([p3[0], p3[1], z, rx, ry, rz, v, a, 0.002])  # к левому
+            path.append([p1[0], p1[1], z, rx, ry, rz, v, a, 0.002])  # обратно в центр
 
-        path[-1][-1] = 0.0
+        # Последняя точка - остановка
+        if path:
+            path[-1][-1] = 0.0
 
         self.rtde_c.moveL(path)
 
