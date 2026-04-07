@@ -246,42 +246,54 @@ class RobotRTDE:
         self.move("movel", p3, a, v)
         self.move("movel", p1, a, v)
 
-    def move_5point_star(self, center, outer_radius=0.05, inner_radius=0.02, a=0.5, v=0.05):
-
+    def move_5point_star(self, n=5, radius=0.05, a=0.5, v=0.05):
         pose = self.get_tcp_pose()
-        z = pose[2]
+        cx, cy, z = pose[:3]
         rx, ry, rz = pose[3:]
 
-        cx, cy = center
+        # 1. Вершины правильного n-угольника
+        points = []
+        for i in range(n):
+            angle = math.pi / 2-i * 2 * math.pi / n  # верхняя вершина первая
+            x = cx+radius * math.cos(angle)
+            y = cy+radius * math.sin(angle)
+            points.append([x, y])
 
+        # 2. Универсальный порядок обхода для звезды (через одну вершину)
+        #    Для нечетного n звезда рисуется одним непрерывным движением.
+        #    Для четного n — потребуется два захода, но сделаем классический вариант (каждые k вершин)
+
+        # Находим шаг для звезды: (n//2) — ближайшее целое, взаимно простое с n и не кратное n/2
+        # Классический вариант: соединяем каждую вторую вершину
+        step = n // 2
+        if n % 2 == 0:
+            # Для четного n звезда рисуется двумя наложениями: step = n/2 - 1 и 1 (но проще сделать шаг n/2 - 1)
+            step = n // 2-1
+            if step < 2:
+                step = n // 2  # если n=4, то просто квадрат
+
+        order = []
+        for i in range(n+1):
+            idx = (i * step) % n
+            order.append(idx)
+
+        # Убираем дублирование последней точки (если она уже есть в начале)
+        if len(order) > 1 and order[-1] == order[0]:
+            order.pop()
+
+        # 3. Формируем путь
         path = []
+        for idx in order:
+            x, y = points[idx]
+            path.append([x, y, z, rx, ry, rz, v, a, 0.002])
 
-        angles = []
-        for i in range(5):
-            angle = math.pi / 2 - i * 2 * math.pi / 5
-            angles.append(angle)
-
-        star_points = []
-
-        for i in range(5):
-            outer_angle = angles[i]
-            x_outer = cx + outer_radius * math.cos(outer_angle)
-            y_outer = cy + outer_radius * math.sin(outer_angle)
-            star_points.append([x_outer, y_outer])
-
-            inner_angle = angles[i] - math.pi / 5
-            x_inner = cx + inner_radius * math.cos(inner_angle)
-            y_inner = cy + inner_radius * math.sin(inner_angle)
-            star_points.append([x_inner, y_inner])
-
-        star_points.append(star_points[0])
-
-        for point in star_points:
-            path.append([point[0], point[1], z, rx, ry, rz, v, a, 0.002])
-
-        if path:
-            path[-1][-1] = 0.0
-
+        path.append([points[0][0], points[0][1], z, rx, ry, rz, v, a, 0.002])
+        # последняя точка — остановка (скорость 0)
+        # if path:
+        #     path[-1][-2] = a  # ускорение? скорее всего седьмой элемент - скорость v, восьмой - ускорение a
+        #     # Лучше явно:
+        #     path[-1][6] = v  # обнуляем скорость в последней точке
+        print(path)
         self.rtde_c.moveL(path)
 
     def speedl(self, tcp_speed, a=0.1, t=10.0):
@@ -376,14 +388,12 @@ class RobotRTDE:
 
             path.append([x, y, z, rx, ry, rz, v, a, 0.0])
 
-        # ❗ явно замыкаем
         x0 = cx+radius
         y0 = cy
         path.append([x0, y0, z, rx, ry, rz, v, a, 0.0])
 
         self.rtde_c.moveL(path)
 
-        # ❗ дожим
         self.rtde_c.moveL([x0, y0, z, rx, ry, rz], v, a)
 
     def parse_bits(self, count: int = 18) -> dict:

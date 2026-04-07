@@ -39,8 +39,8 @@ class Robot:
     def move_triangle(self, side_length=0.005, a=0.3, v=0.02):
         return self.move_triangle(side_length=side_length, a=a, v=v)
 
-    def move_5point_star(self, center, outer_radius=0.05, inner_radius=0.02, a=0.5, v=0.05):
-        return self.move_5point_star(center, outer_radius=outer_radius, inner_radius=inner_radius, a=a, v=v)
+    def move_5point_star(self, n=5, radius=0.03, a=0.5, v=0.05):
+        return self.rtde.move_5point_star(n=n, radius=radius, a=a, v=v)
 
     def parse_bits_DI(self, count: int = 18):
         return self.rtde.parse_bits(count=count)
