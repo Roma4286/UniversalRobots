@@ -2,7 +2,7 @@ import math
 import time
 from config import ROBOT_IP, GRIP_PROGRAM, RELEASE_PROGRAM
 from robot_control import Robot
-
+from mouse_hold import mouse_pressing, mouse_releasing
 # robot = Robot(ROBOT_IP)
 
 # pose = robot.get_tcp_pose()
@@ -30,7 +30,11 @@ if __name__ == "__main__":
         # robot.move_6flower_triangles(center, side=0.02, v=0.01)
         # robot.move_8flower_triangles(center, side=0.02, v=0.01)
         # robot.move_triangle(0.005, v=0.5)
-        robot.move_5point_star(center)
         # robot.move_circle_xy(center, radius=0.05, v=0.05)
+        robot.move_5point_star(center)
+        mouse_pressing()
+        time.sleep(12)
+        mouse_releasing()
+
     finally:
         robot.close()
