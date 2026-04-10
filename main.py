@@ -23,17 +23,21 @@ if __name__ == "__main__":
     robot = Robot(ROBOT_IP)
     pose = robot.get_tcp_pose()
     time.sleep(3)
-    center = [pose[0], pose[1]]
-    print(center)
+    final_center = [-0.1897170618094012, -0.7351738542729902, -0.008215309818223326, 0.36048330742355195, -3.0940601727750954, 0.0018451418590662097]
+    print(pose)
+    center = [final_center[0], final_center[1]]
+
     try:
-        # robot.move_spiral_xy(center, v=0.05)
+        robot.move("movel", final_center, a=0.01, v=0.01)
+        mouse_pressing()
+        robot.move_matching_spiral(center, star_radius=0.03, v = 0.01)
         # robot.move_4flower_triangles(center, side=0.02, v=0.01)
         # robot.move_6flower_triangles(center, side=0.02, v=0.01)
-        # robot.move_8flower_triangles(center, side=0.02, v=0.01)
+        # robot.move_flower_triangles(center, side=0.02, v=0.01)
         # robot.move_triangle(0.005, v=0.5)
         # robot.move_circle_xy(center, radius=0.05, v=0.05)
-        mouse_pressing()
-        robot.move_5point_star(n=8)
+
+        # robot.move_5point_star(n=8,radius=0.01, v=0.01)
         mouse_releasing()
 
     finally:

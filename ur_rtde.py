@@ -94,36 +94,31 @@ class RobotRTDE:
         else:
             raise ValueError("Unsupported move type: " + move_type)
 
-    def move_spiral_xy(self, center, turns=3, steps=400, k=0.002, a=0.5, v=0.05):
+    def move_matching_spiral(self, center, star_radius=0.05, turns=3, steps=400, a=0.5, v=0.05):
+        """
+        Создает спираль, точно соответствующую размеру звезды
+        """
         pose = self.get_tcp_pose()
-
         z = pose[2]
         rx, ry, rz = pose[3:]
-
         cx, cy = center
 
+        # Используем тот же радиус, что и у звезды
+        max_theta = 2 * math.pi * turns
+        k = star_radius / max_theta
+
         path = []
-
-        for i in range(steps):
-            theta = 2 * math.pi * turns * i / steps
-
+        for i in range(steps + 1):
+            theta = max_theta * i / steps
             r = k * theta
+            x = cx + r * math.cos(theta)
+            y = cy + r * math.sin(theta)
 
-            x = cx+r * math.cos(theta)
-            y = cy+r * math.sin(theta)
-
-            path.append([x, y, z, rx, ry, rz, v, a, 0.002])
-
-        theta = 2 * math.pi * turns
-        r = k * theta
-        x = cx+r * math.cos(theta)
-        y = cy+r * math.sin(theta)
-
-        path.append([x, y, z, rx, ry, rz, v, a, 0.0])
+            # Последняя точка с остановкой
+            blend = 0.0 if i == steps else 0.002
+            path.append([x, y, z, rx, ry, rz, v, a, blend])
 
         self.rtde_c.moveL(path)
-
-        self.rtde_c.moveL([x, y, z, rx, ry, rz], v, a)
 
     def move_4flower_triangles(self, center, side=0.05, a=0.5, v=0.05):
 
